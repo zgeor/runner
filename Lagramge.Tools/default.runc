@@ -1,0 +1,27 @@
+ {
+ "lagramge":{
+			 "-T": false,
+			 "-V": false,
+			 "-g": "h.1.gramm",
+			 "-d": 10,
+			 "-v": "og",
+			 "-s": "exhaustive",
+			 "-b": 25,
+			 "-h": "mse",
+			 "-c": null,
+			 "-e": null,
+			 "-l": null,
+			 "-i": 63,
+			 "-t": null,
+			 "-o": null,
+			 "-m": 0,
+			 "-r": null
+ },
+ "runner":{
+ 			"inputDataFile":"D:\\Lagramge\\downloads\\all_var_train_l.csv",
+ 			"folds": [0.5, 0.3, 0.2],
+ 			"outputFolder":"results/",
+ 			"jsonFolder":"results/",
+ 			"errorFolder":"errors/" 	 			
+ }
+}
