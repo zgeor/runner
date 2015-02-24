@@ -108,8 +108,7 @@ def prepareData(fileName):
             allRows.append(row)
     
     for x in range(1, len(allRows)):
-        allRows[x] = [float(i) for i in allRows[x]]   
-             
+        allRows[x] = [float(i) for i in allRows[x]]       
     return allRows, len(allRows)
 
 def preparedDataRow(dataLists):
@@ -290,7 +289,7 @@ def trapezoidalIntegration(calculated, actual, timeStep):
 
 def forwardEulerIntegration(calculated, actual, timeStep):
     """
-    
+    Implementation of forward Euler integration method.
     """
     i = 0
     output = numpy.zeros((actual.size, ))
@@ -304,7 +303,7 @@ def forwardEulerIntegration(calculated, actual, timeStep):
 
 def AdamBashforth2Integration(calculated, actual, timeStep):
     """
-    
+    Implementation of Adam-Bashforth 2 integration.
     """
     output = numpy.zeros((actual.size, ))
     summation = 0 
@@ -464,6 +463,11 @@ def step(c, v):
 def ln(c):
     return log(c)
 
+def step(c, v):
+    if c < v:
+        return v
+    return 0
+
 def main(argv):
     """
     Main method that unfortunately is way too complicated.
@@ -475,55 +479,56 @@ def main(argv):
 
     Configuration = parseConfigFile(confName)
     Configuration['name'] = confName
-    results = rateModels("D:\\Lagramge\\downloads\\08943fde-aef6-11e4-b51a-00155d83ed12.log", "D:\\Lagramge\\downloads\\all_var_train_l.csv")
-    results['configuration'] = Configuration
-    f = open("C:\\inetpub\\wwwroot\\view\\lres\\derr-test.json",'w')
-    f.write(json.dumps(results, indent=3)) 
-    f.close() 
-#     if(not reeval):
-#         runId = str(uuid.uuid1())
-#         
-#         Configuration = parseConfigFile(confName)
-#         Configuration['name'] = confName
-#         
-#             # Setup interruption signal for graceful exit of lagramge.
-#         signal.signal(signal.SIGINT, signalHandler)
-#         
-#         setupDirectories(runId)
-#         
-#         dataFiles = splitDataForCV(Configuration['runner']['inputDataFile'], Configuration['runner']['folds'])
-#         validationSet = dataFiles.pop()
-#         commands = []
-#         for dataFile in dataFiles:
-#             commands.append(generateLagramgeCommand(dataFile, Configuration['lagramge']))
-#               
-#         Processes = [Popen(cmd, 
-#                            stdout=open(addOutputFileById(runId), 'w'),
-#                            stderr=open(Configuration['runner']['errorFolder'] + runId + '.log', 'w'), shell=True) for cmd in commands]
-#         
-#         while stillRunning(Processes):
-#             time.sleep(10)
-#             
-#         results = rateModels(OutputFiles[0], validationSet)
-#         results['configuration'] = Configuration
-#         
-#         writeJsonToFile(Configuration['runner']['jsonFolder'] + basename(runId) + '.json', results) 
-#     else:
-#         for jFile in glob.glob(confName + "*.json"):
-#             isDifferential = False
-#             with open(jFile) as jsonFile:
-#                 initResults = json.load(jsonFile)
-#                 isDifferential = initResults['isDifferential']
-#                 Configuration = initResults['configuration']
-#             if(not(diffsOnly and not isDifferential)):
-#                 fileBase = os.path.basename(jFile)
-#                 runId = string.split(fileBase, ".")[0]               
-#                 
-#                 results = rateModels(Configuration['runner']['outputFolder'] + runId + '.log', TempDataFolder + runId + "/fold_1.data")
-#                 results['configuration'] = Configuration
-#     
-#                 writeJsonToFile(Configuration['runner']['jsonFolder'] + basename(runId) + '.log.json', results)
-#     
+    
+#     results = rateModels("D:\\Lagramge\\downloads\\08943fde-aef6-11e4-b51a-00155d83ed12.log", "D:\\Lagramge\\downloads\\all_var_train_l.csv")
+#     results['configuration'] = Configuration
+#     f = open("C:\\inetpub\\wwwroot\\view\\lres\\derr-test.json",'w')
+#     f.write(json.dumps(results, indent=3)) 
+#     f.close() 
+    if(not reeval):
+        runId = str(uuid.uuid1())
+         
+        Configuration = parseConfigFile(confName)
+        Configuration['name'] = confName
+         
+            # Setup interruption signal for graceful exit of lagramge.
+        signal.signal(signal.SIGINT, signalHandler)
+         
+        setupDirectories(runId)
+         
+        dataFiles = splitDataForCV(Configuration['runner']['inputDataFile'], Configuration['runner']['folds'])
+        validationSet = dataFiles.pop()
+        commands = []
+        for dataFile in dataFiles:
+            commands.append(generateLagramgeCommand(dataFile, Configuration['lagramge']))
+               
+        Processes = [Popen(cmd, 
+                           stdout=open(addOutputFileById(runId), 'w'),
+                           stderr=open(Configuration['runner']['errorFolder'] + runId + '.log', 'w'), shell=True) for cmd in commands]
+         
+        while stillRunning(Processes):
+            time.sleep(10)
+             
+        results = rateModels(OutputFiles[0], validationSet)
+        results['configuration'] = Configuration
+         
+        writeJsonToFile(Configuration['runner']['jsonFolder'] + basename(runId) + '.json', results) 
+    else:
+        for jFile in glob.glob(confName + "*.json"):
+            isDifferential = False
+            with open(jFile) as jsonFile:
+                initResults = json.load(jsonFile)
+                isDifferential = initResults['isDifferential']
+                Configuration = initResults['configuration']
+            if(not(diffsOnly and not isDifferential)):
+                fileBase = os.path.basename(jFile)
+                runId = string.split(fileBase, ".")[0]               
+                 
+                results = rateModels(Configuration['runner']['outputFolder'] + runId + '.log', TempDataFolder + runId + "/fold_1.data")
+                results['configuration'] = Configuration
+     
+                writeJsonToFile(Configuration['runner']['jsonFolder'] + basename(runId) + '.log.json', results)
+     
     print "KOHEC"
 
 if __name__ == '__main__':
