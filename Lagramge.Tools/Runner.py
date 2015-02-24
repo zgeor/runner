@@ -118,7 +118,7 @@ def preparedDataRow(dataLists):
     
     returns dict<str, float>, int
     """
-    for i in range(1, len(dataLists) - 1):
+    for i in range(1, len(dataLists)):
         yield dict(zip(dataLists[0], dataLists[i]))
 
 def prepDataRow(row, dataLists):
@@ -288,6 +288,35 @@ def trapezoidalIntegration(calculated, actual, timeStep):
         output[i] = summation 
     return output
 
+def forwardEulerIntegration(calculated, actual, timeStep):
+    """
+    
+    """
+    i = 0
+    output = numpy.zeros((actual.size, ))
+    
+    summation = output[0] = actual[0]
+    
+    for i in range(1, actual.size):
+        summation += (calculated[i -1])* timeStep
+        output[i] = summation 
+    return output
+
+def AdamBashforth2Integration(calculated, actual, timeStep):
+    """
+    
+    """
+    output = numpy.zeros((actual.size, ))
+    summation = 0 
+    output[0] = actual[0]
+    output[1] = actual[1]
+    
+    summation += actual[1]
+    for i in range(2, actual.size):
+        summation += ((3/2)*calculated[i-1] - (1/2)*calculated[i-2])* timeStep
+        output[i] = summation 
+    return output
+
 def rateModels(lOutputFileName, dataFileName):
     """
     Rates the Lagramge models, according to some Accuracy results.
@@ -323,14 +352,14 @@ def rateModels(lOutputFileName, dataFileName):
     evaluationDataPoints = 0.0
     if results['isDifferential']:
         for i in results['models']:
-            calculated = numpy.zeros((dataLength, ))
+            calculated = numpy.zeros((dataLength - 1, ))
             
             for data in preparedDataRow(preppedData):
                 calculated[evaluationDataPoints] = evaluateModel(results['models'][i]['equation'], data)
                 evaluationDataPoints += 1
                 
             actual = numpy.array(map(itemgetter(preppedData[0].index(pVarName)), preppedData[1:dataLength]))
-            predicted = trapezoidalIntegration(calculated, actual, timeStep)
+            predicted = AdamBashforth2Integration(calculated, actual, timeStep)
             error = numpy.subtract(actual, predicted)
             squaredError = numpy.multiply(error, error)
             mpe = numpy.average(numpy.divide(error, actual)) * 100.0
@@ -446,7 +475,7 @@ def main(argv):
 
     Configuration = parseConfigFile(confName)
     Configuration['name'] = confName
-    results = rateModels("D:\\Lagramge\\downloads\\271bca88-8fc2-11e4-8d02-00155d83f2ca.log", "D:\\Lagramge\\downloads\\all_var_train_l.csv")
+    results = rateModels("D:\\Lagramge\\downloads\\08943fde-aef6-11e4-b51a-00155d83ed12.log", "D:\\Lagramge\\downloads\\all_var_train_l.csv")
     results['configuration'] = Configuration
     f = open("C:\\inetpub\\wwwroot\\view\\lres\\derr-test.json",'w')
     f.write(json.dumps(results, indent=3)) 
