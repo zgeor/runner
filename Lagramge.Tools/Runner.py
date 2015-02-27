@@ -1,9 +1,9 @@
+#!/usr/bin/python
 '''
 Created on 19 Dec 2014
 
 @author: Zhivko Georgiev
 '''
-#!/usr/bin/python
 
 #####################################
 # User imports
@@ -170,6 +170,13 @@ def splitDataForCV(dataFile, foldSizes):
                     fold.write("%s" % content[z])
     return dataFiles
 
+def preProcessData(fileName, processingFunction):
+    """
+    This is data pre-processing step.
+    
+    """
+    
+    pass
 def generateLagramgeCommand(dataFileName, localConfig):
     """
     Generate Lagramge command line arguments.
@@ -198,26 +205,6 @@ def parseConfigFile(configFileName):
     with open(configFileName) as json_data:
         data = json.load(json_data)
     return data
-
-def parseProgramArgs(args):
-    """
-    Parses the input arguments of the program.
-    Overwrites the local configuration file.
-    
-    returns dict<dict>
-    """
-
-    parser = argparse.ArgumentParser(description='Run LAGRAMGE cross-validation process.')
-    
-    parser.add_argument('conf', metavar='runc file', type=str, nargs='?', default="default.runc",
-                       help='The runner configuration file to be used. If none then default.runc will be used.')
-    
-    parser.add_argument('-r', dest='reevaluate', default=False, action="store_true", help='Re-evaluate results.')
-    parser.add_argument('-d', dest='diffsOnly', default=False, action="store_true", help='Re-evaluate only differential equations.')
-    
-    parsed = parser.parse_known_args()
-
-    return parsed[0].conf, parsed[0].reevaluate, parsed[0].diffsOnly
 
 def stillRunning(processes):
     """
@@ -390,6 +377,11 @@ def getBestMpeModel(results, instrument):
     return min(results, key=lambda v: abs(results[v].get(instrument)))
 
 def calcSquaredError(actualResult, forecastResult):
+    """
+    Calculates Squared error.
+    
+    returns float
+    """
     res = 0.0
     try:
         res = (actualResult - forecastResult)**2
@@ -407,6 +399,11 @@ def calcPercentageError(actualResult, forecastResult):
     return ((actualResult - forecastResult)/actualResult) * 100
 
 def calcAbsolutePercentageError(actualResult, forecastResult):
+    """
+    Calculates Absolute Percentage error.
+    
+    returns float
+    """
     return (abs((actualResult - forecastResult)/actualResult)) * 100
 
 def setupDirectories(uniqueRunId):
@@ -468,6 +465,30 @@ def step(c, v):
         return v
     return 0
 
+#####################################
+# Program execution functions
+#####################################
+
+def parseProgramArgs(args):
+    """
+    Parses the input arguments of the program.
+    Overwrites the local configuration file.
+    
+    returns dict<dict>
+    """
+
+    parser = argparse.ArgumentParser(description='Run LAGRAMGE cross-validation process.')
+    
+    parser.add_argument('conf', metavar='runc file', type=str, nargs='?', default="runc/default.runc",
+                       help='The runner configuration file to be used. If none then default.runc will be used.')
+    
+    parser.add_argument('-r', dest='reevaluate', default=False, action="store_true", help='Re-evaluate results.')
+    parser.add_argument('-d', dest='diffsOnly', default=False, action="store_true", help='Re-evaluate only differential equations.')
+    
+    parsed = parser.parse_known_args()
+
+    return parsed[0].conf, parsed[0].reevaluate, parsed[0].diffsOnly
+
 def main(argv):
     """
     Main method that unfortunately is way too complicated.
@@ -491,7 +512,7 @@ def main(argv):
         Configuration = parseConfigFile(confName)
         Configuration['name'] = confName
          
-            # Setup interruption signal for graceful exit of lagramge.
+        # Setup interruption signal for graceful exit of lagramge.
         signal.signal(signal.SIGINT, signalHandler)
          
         setupDirectories(runId)
