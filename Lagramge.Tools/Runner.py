@@ -383,7 +383,7 @@ def rateModels(lOutputFileName, dataFileName):
                 evaluationDataPoints += 1
             
             predictedCorrected = AdamBashforth2Corrector(corrected, calculated, actual, timeStep)
-            
+        
             error = numpy.subtract(actual, predictedCorrected)
             squaredError = numpy.multiply(error, error)
             mpe = numpy.average(numpy.divide(error, actual)) * 100.0
