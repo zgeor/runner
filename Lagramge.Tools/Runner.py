@@ -317,6 +317,22 @@ def AdamBashforth2Integration(calculated, actual, timeStep):
         output[i] = summation 
     return output
 
+def AdamBashforth4Integration(calculated, actual, timeStep):
+    """
+    Implementation of Adam-Bashforth 2 integration.
+    """
+    output = numpy.zeros((actual.size, ))
+    summation = 0 
+    output[0] = actual[0]
+    output[1] = actual[1]
+    output[2] = actual[2]
+    output[3] = actual[3]    
+    
+    for i in range(4, actual.size):
+        summation += actual[i - 1] + (55*calculated[i-1] - 59*calculated[i-2] + 37*calculated[i-3] - 9*calculated[i-4])/24* timeStep
+        output[i] = summation 
+    return output
+
 def AdamBashforth2Corrector(predicted, calculated, actual, timeStep):
     """
     Implementation of Adam-Bashforth 2 correctorMethod.
@@ -373,18 +389,9 @@ def rateModels(lOutputFileName, dataFileName):
                 evaluationDataPoints += 1
                 
             actual = numpy.array(map(itemgetter(preppedData[0].index(pVarName)), preppedData[1:dataLength]))
-            predicted = AdamBashforth2Integration(calculated, actual, timeStep)
+            predicted = AdamBashforth4Integration(calculated, actual, timeStep)
             
-            evaluationDataPoints = 0
-            corrected = numpy.zeros((dataLength - 1, ))
-            for data in preparedDataRow(preppedData):
-                data[pVarName] = predicted[evaluationDataPoints]
-                corrected[evaluationDataPoints] = evaluateModel(results['models'][i]['equation'], data)
-                evaluationDataPoints += 1
-            
-            predictedCorrected = AdamBashforth2Corrector(corrected, calculated, actual, timeStep)
-        
-            error = numpy.subtract(actual, predictedCorrected)
+            error = numpy.subtract(actual, predicted)
             squaredError = numpy.multiply(error, error)
             mpe = numpy.average(numpy.divide(error, actual)) * 100.0
             mape =  numpy.average(numpy.abs(numpy.divide(error, actual))) * 100.0
