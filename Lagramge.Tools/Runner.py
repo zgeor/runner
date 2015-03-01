@@ -521,8 +521,8 @@ def main(argv):
 
     confName, reeval, diffsOnly = parseProgramArgs(argv)
 
-    Configuration = parseConfigFile(confName)
-    Configuration['name'] = confName
+#    Configuration = parseConfigFile(confName)
+#    Configuration['name'] = confName
     
 #     results = rateModels("D:\\Lagramge\\downloads\\08943fde-aef6-11e4-b51a-00155d83ed12.log", "D:\\Lagramge\\downloads\\all_var_train_l.csv")
 #     results['configuration'] = Configuration
