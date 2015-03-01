@@ -347,7 +347,8 @@ def rateModels(lOutputFileName, dataFileName):
         results['models'][i]['lagramgeMDL'] = model.Mdl
         results['models'][i]['runMSE'] = 0.0
         results['models'][i]['runMPE'] = 0.0
-    
+        results['models'][i]['runMAPE'] = 0.0
+            
     pVarName = Configuration['lagramge']['-v']
 
     if results['isDifferential']:
