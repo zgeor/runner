@@ -325,7 +325,7 @@ def AdamBashforth2Corrector(predicted, calculated, actual, timeStep):
     summation = output[0] = actual[0]
     
     for i in range(1, actual.size):
-        summation += (calculated[i] - calculated[i-1])*(1/2)* timeStep
+        summation += (predicted[i] - calculated[i-1])*(1/2)* timeStep
         output[i] = summation 
     return output
 
@@ -381,8 +381,10 @@ def rateModels(lOutputFileName, dataFileName):
                 data[pVarName] = predicted[evaluationDataPoints]
                 corrected[evaluationDataPoints] = evaluateModel(results['models'][i]['equation'], data)
                 evaluationDataPoints += 1
-                
-            error = numpy.subtract(actual, corrected)
+            
+            predictedCorrected = AdamBashforth2Corrector(corrected, calculated, actual, timeStep)
+            
+            error = numpy.subtract(actual, predictedCorrected)
             squaredError = numpy.multiply(error, error)
             mpe = numpy.average(numpy.divide(error, actual)) * 100.0
             mape =  numpy.average(numpy.abs(numpy.divide(error, actual))) * 100.0
