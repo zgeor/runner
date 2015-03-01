@@ -328,8 +328,9 @@ def AdamBashforth4Integration(calculated, actual, timeStep):
     output[2] = actual[2]
     output[3] = actual[3]    
     
+    summation += actual[3]  
     for i in range(4, actual.size):
-        summation += actual[i - 1] + (55*calculated[i-1] - 59*calculated[i-2] + 37*calculated[i-3] - 9*calculated[i-4])/24* timeStep
+        summation += (55*calculated[i-1] - 59*calculated[i-2] + 37*calculated[i-3] - 9*calculated[i-4])/24* timeStep
         output[i] = summation 
     return output
 
