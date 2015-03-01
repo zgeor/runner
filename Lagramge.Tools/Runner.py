@@ -89,7 +89,7 @@ def parseLagramgeOutput(fileName):
         models.append(LModel(group[0], group[1], group[2]))
     return models
 
-def prepareData(fileName):
+def readData(fileName):
     """
     Remark          Very bad implementation. 
                     Could be improved by using iter() and reading file
@@ -175,8 +175,22 @@ def preProcessData(fileName, processingFunction):
     This is data pre-processing step.
     
     """
-    
-    pass
+    dataWithHeader, length = readData(fileName)
+    header = dataWithHeader[0]
+    data = numpy.array(dataWithHeader[1:])
+
+def minMaxNormalisation(data):
+    nprollaxis(data, axis=0)
+
+    mean = data.mean(axis=0)
+    std = data.std(axis=0)
+    if isinstance(std, ndarray):
+        std[std == 0.0] = 1.0
+    elif std == 0.:
+        std = 1.
+    data -= mean
+    data /= std
+        
 def generateLagramgeCommand(dataFileName, localConfig):
     """
     Generate Lagramge command line arguments.
@@ -315,7 +329,7 @@ def rateModels(lOutputFileName, dataFileName):
     models = parseLagramgeOutput(lOutputFileName)
     
     # "D:\\Lagramge\\downloads\\temp\\trainDataOGnRI1.csv"
-    preppedData, dataLength = prepareData(dataFileName)
+    preppedData, dataLength = readData(dataFileName)
     results['isValidation'] = True
     results['dataLength'] = dataLength
     results['isDifferential'] = bool(Configuration['lagramge']['-i'] or Configuration['lagramge']['-t'])
@@ -335,9 +349,10 @@ def rateModels(lOutputFileName, dataFileName):
         results['models'][i]['runMPE'] = 0.0
     
     pVarName = Configuration['lagramge']['-v']
-    evaluationDataPoints = 0.0
+
     if results['isDifferential']:
         for i in results['models']:
+            evaluationDataPoints = 0.0
             calculated = numpy.zeros((dataLength - 1, ))
             
             for data in preparedDataRow(preppedData):
@@ -349,24 +364,32 @@ def rateModels(lOutputFileName, dataFileName):
             error = numpy.subtract(actual, predicted)
             squaredError = numpy.multiply(error, error)
             mpe = numpy.average(numpy.divide(error, actual)) * 100.0
+            mape =  numpy.average(numpy.abs(numpy.divide(error, actual))) * 100.0
             mse = numpy.average(squaredError)
             
             results['models'][i]['runMSE'] =  mse
             results['models'][i]['runMPE'] = mpe
+            results['models'][i]['runMAPE'] =  mape
     else:
+        evaluationDataPoints = 0.0
         for data in preparedDataRow(preppedData):
             evaluationDataPoints += 1
             for i in results['models']:
                 res = evaluateModel(results['models'][i]['equation'], data)
                 results['models'][i]['runMSE'] += calcSquaredError(data[pVarName], res)
                 results['models'][i]['runMPE'] += calcPercentageError(data[pVarName], res)
+                results['models'][i]['runMAPE'] += calcAbsolutePercentageError(data[pVarName], res)
+                
         for i in results['models']:
             results['models'][i]['runMSE'] = results['models'][i]['runMSE']/evaluationDataPoints
             results['models'][i]['runMPE'] = results['models'][i]['runMPE']/evaluationDataPoints
+            results['models'][i]['runMPE'] = results['models'][i]['runMAPE']/evaluationDataPoints
         
     results['bestMseMId'] = getBestModel(results['models'], "runMSE")
     results['bestMpeMId'] = getBestModel(results['models'], "runMPE")
+    results['bestMapeMId'] = getBestModel(results['models'], "runMAPE")
     results['bestMse'] = results['models'][results['bestMseMId']]['runMSE']
+    results['bestMape'] = results['models'][results['bestMpeMId']]['runMAPE']
     results['bestMpe'] = results['models'][results['bestMpeMId']]['runMPE']
     return results
 
@@ -548,7 +571,7 @@ def main(argv):
                 results = rateModels(Configuration['runner']['outputFolder'] + runId + '.log', TempDataFolder + runId + "/fold_1.data")
                 results['configuration'] = Configuration
      
-                writeJsonToFile(Configuration['runner']['jsonFolder'] + basename(runId) + '.log.json', results)
+                writeJsonToFile(Configuration['runner']['jsonFolder'] + basename(runId) + '.json', results)
      
     print "KOHEC"
 
