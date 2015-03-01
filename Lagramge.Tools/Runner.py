@@ -317,6 +317,18 @@ def AdamBashforth2Integration(calculated, actual, timeStep):
         output[i] = summation 
     return output
 
+def AdamBashforth2Corrector(predicted, calculated, actual, timeStep):
+    """
+    Implementation of Adam-Bashforth 2 correctorMethod.
+    """
+    output = numpy.zeros((actual.size, ))
+    summation = output[0] = actual[0]
+    
+    for i in range(1, actual.size):
+        summation += (calculated[i] - calculated[i-1])*(1/2)* timeStep
+        output[i] = summation 
+    return output
+
 def rateModels(lOutputFileName, dataFileName):
     """
     Rates the Lagramge models, according to some Accuracy results.
@@ -353,7 +365,7 @@ def rateModels(lOutputFileName, dataFileName):
 
     if results['isDifferential']:
         for i in results['models']:
-            evaluationDataPoints = 0.0
+            evaluationDataPoints = 0
             calculated = numpy.zeros((dataLength - 1, ))
             
             for data in preparedDataRow(preppedData):
@@ -362,7 +374,15 @@ def rateModels(lOutputFileName, dataFileName):
                 
             actual = numpy.array(map(itemgetter(preppedData[0].index(pVarName)), preppedData[1:dataLength]))
             predicted = AdamBashforth2Integration(calculated, actual, timeStep)
-            error = numpy.subtract(actual, predicted)
+            
+            evaluationDataPoints = 0
+            corrected = numpy.zeros((dataLength - 1, ))
+            for data in preparedDataRow(preppedData):
+                data[pVarName] = predicted[evaluationDataPoints]
+                corrected[evaluationDataPoints] = evaluateModel(results['models'][i]['equation'], data)
+                evaluationDataPoints += 1
+                
+            error = numpy.subtract(actual, corrected)
             squaredError = numpy.multiply(error, error)
             mpe = numpy.average(numpy.divide(error, actual)) * 100.0
             mape =  numpy.average(numpy.abs(numpy.divide(error, actual))) * 100.0
