@@ -197,10 +197,10 @@ def parseProgramArgs(args):
 
     parser = argparse.ArgumentParser(description='Run LAGRAMGE equation validation process.')
     
-    parser.add_argument('dataFile', metavar='lagramge data file', type=str, nargs='?',
+    parser.add_argument('dataFile', metavar='lagramge data file', type=str,
                        help='The data file to be used for validation process.')
     
-    parser.add_argument('-e', dest='eq', default=False, type=str, help='Lagramge equation')
+    parser.add_argument('-e', dest='eq', required=True, type=str, help='Lagramge equation')
     parser.add_argument('-t', dest='timeStep', default=False, type=float32, help='Time step for differential equations. By default ')
     
     parsed = parser.parse_known_args()
