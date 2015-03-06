@@ -122,13 +122,14 @@ def rateModel(eq, pVarName, dataFileName, timeStep):
     mpe = 0.0
     
     evaluationDataPoints = 0.0
+    predicted = numpy.zeros((dataLength - 1, ))
+    actual = numpy.array(map(itemgetter(preppedData[0].index(pVarName)), preppedData[1:dataLength]))
+    
     if timeStep:
         calculated = numpy.zeros((dataLength - 1, ))
         for data in preparedDataRow(preppedData):
             calculated[evaluationDataPoints] = evaluateModel(eq, data)
             evaluationDataPoints += 1
-                
-        actual = numpy.array(map(itemgetter(preppedData[0].index(pVarName)), preppedData[1:dataLength]))
         
         predicted = adamBashforth2Integration(calculated, actual, timeStep)
         #predicted = trapezoidalIntegration(calculated, actual, timeStep)
@@ -139,12 +140,11 @@ def rateModel(eq, pVarName, dataFileName, timeStep):
         mse = numpy.average(squaredError)
     else:
         for data in preparedDataRow(preppedData):
+            predicted[evaluationDataPoints] = evaluateModel(eq, data)
+            se += calcSquaredError(data[pVarName], predicted[evaluationDataPoints])
+            mpe += calcPercentageError(data[pVarName], predicted[evaluationDataPoints])
             evaluationDataPoints += 1
-            res = evaluateModel(eq, data)
-            se += calcSquaredError(data[pVarName], res)
-            mpe += calcPercentageError(data[pVarName], res)
-
-    return mse, mpe
+    return mse, mpe, predicted, actual
 
 def calcSquaredError(actualResult, forecastResult):
     """
@@ -201,29 +201,37 @@ def parseProgramArgs(args):
                        help='The data file to be used for validation process.')
     
     parser.add_argument('-e', dest='eq', required=True, type=str, help='Lagramge equation')
+    parser.add_argument('-o', dest='outDir', required=True, type=str, help='Output File(Directory of file must be created first)')
     parser.add_argument('-t', dest='timeStep', default=False, type=float32, help='Time step for differential equations. By default ')
     
     parsed = parser.parse_known_args()
 
-    return parsed[0].dataFile, parsed[0].eq, parsed[0].timeStep
+    return parsed[0].dataFile, parsed[0].eq, parsed[0].timeStep, parsed[0].outDir
 
 def main(argv):
     """
     Main method that unfortunately is way too complicated.
     """    
 
-    dataFileName, eq, diffsOnly = parseProgramArgs(argv)
+    dataFileName, eq, timeStep, output = parseProgramArgs(argv)
     search = ModelMeasurmentMatcher.search(eq)
     group = search.group(1, 2, 3)
     dependentVar = group[0]
     eq = group[1]
     lMse = group[2]
     
-    mse, mpe = rateModel(eq, dependentVar, dataFileName, diffsOnly)
+    mse, mpe, predicted, actual = rateModel(eq, dependentVar, dataFileName, timeStep)
     
     print "Lagramge MSE: %s" % lMse
     print "MSE: %.6f" % mse
     print "MPE: %.6f" % mpe
-
+   
+    with open(output, 'wb') as fp:
+            a = csv.writer(fp, delimiter=',')  
+            a.writerow(['Time', 'Actual', 'Predicted'])
+            for i in range(0, actual.size):
+                a.writerow([i, actual[i], predicted[i]])
+    print "Output saved to: %s" % output
+    
 if __name__ == '__main__':
     main(sys.argv[1:])
