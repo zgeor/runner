@@ -390,15 +390,17 @@ def rateModels(lOutputFileName, dataFileName):
                 evaluationDataPoints += 1
                 
             actual = numpy.array(map(itemgetter(preppedData[0].index(pVarName)), preppedData[1:dataLength]))
-            predicted = AdamBashforth4Integration(calculated, actual, timeStep)
+            predicted = AdamBashforth2Integration(calculated, actual, timeStep)
             
             error = numpy.subtract(actual, predicted)
             squaredError = numpy.multiply(error, error)
             mpe = numpy.average(numpy.divide(error, actual)) * 100.0
             mape =  numpy.average(numpy.abs(numpy.divide(error, actual))) * 100.0
             mse = numpy.average(squaredError)
+            rmse = numpy.sqrt(squaredError)
             
-            results['models'][i]['runMSE'] =  mse
+            results['models'][i]['runMSE'] = mse
+            results['models'][i]['runRMSE'] = rmse
             results['models'][i]['runMPE'] = mpe
             results['models'][i]['runMAPE'] =  mape
     else:
@@ -414,14 +416,18 @@ def rateModels(lOutputFileName, dataFileName):
         for i in results['models']:
             results['models'][i]['runMSE'] = results['models'][i]['runMSE']/evaluationDataPoints
             results['models'][i]['runMPE'] = results['models'][i]['runMPE']/evaluationDataPoints
-            results['models'][i]['runMPE'] = results['models'][i]['runMAPE']/evaluationDataPoints
-        
+            results['models'][i]['runMAPE'] = results['models'][i]['runMAPE']/evaluationDataPoints
+            results['models'][i]['runRMSE'] = numpy.sqrt(results['models'][i]['runMSE'])
+            
     results['bestMseMId'] = getBestModel(results['models'], "runMSE")
+    results['bestRmseMId'] = getBestModel(results['models'], "runRMSE")
     results['bestMpeMId'] = getBestModel(results['models'], "runMPE")
     results['bestMapeMId'] = getBestModel(results['models'], "runMAPE")
     results['bestMse'] = results['models'][results['bestMseMId']]['runMSE']
     results['bestMape'] = results['models'][results['bestMpeMId']]['runMAPE']
     results['bestMpe'] = results['models'][results['bestMpeMId']]['runMPE']
+    results['bestRmse'] = results['models'][results['bestRmseMId']]['runRlMSE']
+    
     return results
 
 def getBestModel(results, instrument):
@@ -589,12 +595,14 @@ def main(argv):
          
         writeJsonToFile(Configuration['runner']['jsonFolder'] + basename(runId) + '.json', results) 
     else:
+        print "Evaluating files in: '%s'" % confName
         for jFile in glob.glob(confName + "*.json"):
             isDifferential = False
             with open(jFile) as jsonFile:
                 initResults = json.load(jsonFile)
                 isDifferential = initResults['isDifferential']
                 Configuration = initResults['configuration']
+            print "Evaluating: '%s' as Differential: %s" % jFile, isDifferential 
             if(not(diffsOnly and not isDifferential)):
                 fileBase = os.path.basename(jFile)
                 runId = string.split(fileBase, ".")[0]               
