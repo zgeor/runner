@@ -375,6 +375,7 @@ def rateModels(lOutputFileName, dataFileName):
         results['models'][i]['lagramgeMSE'] = model.Mse
         results['models'][i]['lagramgeMDL'] = model.Mdl
         results['models'][i]['runMSE'] = 0.0
+        results['models'][i]['runRMSE'] = 0.0
         results['models'][i]['runMPE'] = 0.0
         results['models'][i]['runMAPE'] = 0.0
             
@@ -397,7 +398,7 @@ def rateModels(lOutputFileName, dataFileName):
             mpe = numpy.average(numpy.divide(error, actual)) * 100.0
             mape =  numpy.average(numpy.abs(numpy.divide(error, actual))) * 100.0
             mse = numpy.average(squaredError)
-            rmse = numpy.sqrt(squaredError)
+            rmse = numpy.sqrt(mse)
             
             results['models'][i]['runMSE'] = mse
             results['models'][i]['runRMSE'] = rmse
@@ -421,19 +422,20 @@ def rateModels(lOutputFileName, dataFileName):
             
     results['bestMseMId'] = getBestModel(results['models'], "runMSE")
     results['bestRmseMId'] = getBestModel(results['models'], "runRMSE")
-    results['bestMpeMId'] = getBestModel(results['models'], "runMPE")
-    results['bestMapeMId'] = getBestModel(results['models'], "runMAPE")
-    results['bestMse'] = results['models'][results['bestMseMId']]['runMSE']
-    results['bestMape'] = results['models'][results['bestMpeMId']]['runMAPE']
-    results['bestMpe'] = results['models'][results['bestMpeMId']]['runMPE']
-    results['bestRmse'] = results['models'][results['bestRmseMId']]['runRlMSE']
+    results['bestMpeMId'] = getBestAbsModel(results['models'], "runMPE")
+    results['bestMapeMId'] = getBestAbsModel(results['models'], "runMAPE")
     
+    results['bestMse'] = results['models'][results['bestMseMId']]['runMSE']
+    results['bestRmse'] = results['models'][results['bestRmseMId']]['runRMSE']
+    results['bestMape'] = results['models'][results['bestMapeMId']]['runMAPE']
+    results['bestMpe'] = results['models'][results['bestMpeMId']]['runMPE']
+
     return results
 
 def getBestModel(results, instrument):
     return min(results, key=lambda v: results[v].get(instrument))
 
-def getBestMpeModel(results, instrument):
+def getBestAbsModel(results, instrument):
     return min(results, key=lambda v: abs(results[v].get(instrument)))
 
 def calcSquaredError(actualResult, forecastResult):
@@ -602,7 +604,7 @@ def main(argv):
                 initResults = json.load(jsonFile)
                 isDifferential = initResults['isDifferential']
                 Configuration = initResults['configuration']
-            print "Evaluating: '%s' as Differential: %s" % jFile, isDifferential 
+            print "Evaluating: '%s' as Differential: %s" % (jFile, isDifferential)
             if(not(diffsOnly and not isDifferential)):
                 fileBase = os.path.basename(jFile)
                 runId = string.split(fileBase, ".")[0]               
